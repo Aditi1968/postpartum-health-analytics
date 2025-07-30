@@ -1,0 +1,123 @@
+// ✅ Postpartum Health Intelligence Platform – Full DBML Schema
+// ✅ Designed for SQL Developers + Data Engineers
+// ✅ https://dbdiagram.io compatible – paste to visualize schema
+
+Table users {
+  user_id varchar [pk, note: "Primary key for users (mothers)"]
+  name varchar
+  age int
+  region varchar [note: "Geographic region (joins with dim_region)"]
+  language varchar
+  created_at date
+  risk_flag varchar [note: "Low, Medium, High"]
+}
+
+Table caregivers {
+  caregiver_id varchar [pk, note: "Primary key for caregivers"]
+  name varchar
+  contact_email varchar
+  phone_number varchar
+  region varchar [note: "Used for geographic filtering"]
+  assigned_count int
+  created_at date
+}
+
+Table user_caregiver_map {
+  user_id varchar [note: "FK → users"]
+  caregiver_id varchar [note: "FK → caregivers"]
+
+  Indexes {
+    (user_id, caregiver_id) [unique]
+  }
+}
+
+Table family_members {
+  family_id varchar [pk]
+  name varchar
+  relationship varchar [note: "Spouse, Mother, Friend etc."]
+  email varchar
+  phone varchar
+  created_at date
+}
+
+Table user_family_access {
+  user_id varchar [note: "FK → users"]
+  family_id varchar [note: "FK → family_members"]
+  access_type varchar [note: "read-only / alerts-only"]
+  granted_at date
+}
+
+Table journals {
+  journal_id varchar [pk]
+  user_id varchar [note: "FK → users"]
+  date date
+  text text
+  sentiment_score float
+  emotion varchar [note: "positive / neutral / negative"]
+}
+
+Table phq_scores {
+  score_id varchar [pk]
+  user_id varchar [note: "FK → users"]
+  week int
+  q1 int
+  q2 int
+  q3 int
+  q4 int
+  q5 int
+  q6 int
+  q7 int
+  q8 int
+  q9 int
+  total_score int
+  severity varchar [note: "None, Mild, Moderate, Moderately Severe, Severe"]
+  date date
+}
+
+Table visits {
+  visit_id varchar [pk]
+  user_id varchar [note: "FK → users"]
+  date date
+  reason varchar
+  location varchar
+  attended boolean
+}
+
+Table alerts {
+  alert_id varchar [pk]
+  user_id varchar [note: "FK → users"]
+  type varchar [note: "Mood or PHQ"]
+  reason varchar
+  severity varchar [note: "Medium or High"]
+  date date
+}
+
+Table dim_date {
+  date_key date [pk, note: "Primary key for time-based analysis"]
+  day int
+  month int
+  month_name varchar
+  year int
+  week int
+}
+
+Table dim_region {
+  region varchar [pk]
+  state varchar
+}
+
+// ✅ All relationships (Ref) — placed at top-level, outside any table
+
+Ref: user_caregiver_map.user_id > users.user_id
+Ref: user_caregiver_map.caregiver_id > caregivers.caregiver_id
+
+Ref: user_family_access.user_id > users.user_id
+Ref: user_family_access.family_id > family_members.family_id
+
+Ref: journals.user_id > users.user_id
+Ref: phq_scores.user_id > users.user_id
+Ref: visits.user_id > users.user_id
+Ref: alerts.user_id > users.user_id
+
+Ref: users.region > dim_region.region
+Ref: caregivers.region > dim_region.region
